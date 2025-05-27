@@ -1,4 +1,4 @@
 class Company:
-    id: str
+    company_id: str
     name: str
     website: str
