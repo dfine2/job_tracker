@@ -172,3 +172,7 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+.envrc
+job_tracker.db
+backup_data/
