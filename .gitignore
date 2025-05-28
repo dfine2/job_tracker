@@ -176,3 +176,4 @@ cython_debug/
 .envrc
 job_tracker.db
 backup_data/
+data/
