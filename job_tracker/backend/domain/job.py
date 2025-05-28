@@ -1,42 +1,66 @@
-from sqlite3 import Connection
 
-from job_tracker.models.enums import  Source, Status, WorkModel
-from job_tracker.models.company import Company
-from job_tracker.models.compensation import Compensation
-from job_tracker.models.location import Location
+from dataclasses import dataclass
+import enum
+from sqlalchemy import Enum, Float, ForeignKey, String
+from sqlalchemy.orm import composite, Mapped, mapped_column, relationship
 
-class Job:
-    job_id: str
-    title: str
-    company: Company
-    compensation: Compensation
-    location: Location
-    post_url: str
-    source: Source
 
-    work_model: WorkModel
-    status: Status = Status.NOT_APPLIED
+from job_tracker.backend.domain.application import Application
+from job_tracker.backend.domain.base_classes import Base
+from job_tracker.backend.domain.benefits import Benefits
+from job_tracker.backend.domain.company import Company
+
+class WorkModel(enum.Enum):
+    ON_SITE = "On-Site"
+    REMOTE = "Remote"
+    HYBRID = "Hybrid"
+
+
+class PostingSource(enum.Enum):
+    LINKEDIN = "LinkedIn"
+    OTHER="Other"
+
+class PayRate(enum.Enum):
+    HOURLY = "hourly"
+    DAILY = "daily"
+    WEEKLY = "weekly"
+    MONTHLY = "monthly"
+    ANNUALLY = "annually"
+
+@dataclass
+class Compensation():
+    low: float
+    high: float
+    rate: PayRate
     
-    @staticmethod
-    def _create_table(conn: Connection):
-        curs = conn.cursor()
-        source_values = ",".join(f"'{name.value}'" for name in Source)
-        work_model_values = ",".join(f"'{name.value}'" for name in WorkModel)
-        status_values = ",".join(f"'{name.value}'" for name in Status)
+@dataclass
+class Posting():
+    source: PostingSource
+    link: str
 
-        sql = f"""
-        CREATE TABLE job (
-            job_id VARCHAR(255) PRIMARY KEY,
-            title VARCHAR(255),
-            company_id VARCHAR(255),
-            compensation_yearly_low DECIMAL(19, 4),
-            compensation_yearly_high DECIMAL(19,4),
-            post_url VARCHAR(255),
-            source TEXT CHECK(source IN ({source_values})),
-            work_model TEXT CHECK(work_model IN ({work_model_values})),
-            status TEXT CHECK(status IN ({status_values})),
-            location_id VARCHAR(255),
-            CONSTRAINT fk_company FOREIGN KEY (company_id) REFERENCES company(company_id)
-        )
-        """
-        curs.execute(sql)
+
+class Job(Base):
+    __tablename__ = "job"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    title: Mapped[str] = mapped_column(String)
+    work_model: Mapped[WorkModel] = mapped_column(Enum(WorkModel, name="work_model"))
+
+    compensation_low: Mapped[float] = mapped_column(Float)
+    compensation_high: Mapped[float] = mapped_column(Float)
+    compensation_rate: Mapped[PayRate] = mapped_column(Enum(PayRate, name="compensation_rate"))
+    compensation: Mapped[Compensation] = composite(Compensation, compensation_low, compensation_high, compensation_rate)
+
+    company_id: Mapped[str] = mapped_column(ForeignKey("company.id"))
+    company: Mapped[Company] = relationship(back_populates="job")
+
+    application: Mapped[Application] = relationship(back_populates="job", uselist=False, cascade="all, delete_orphan")
+
+    posting_source: Mapped[PostingSource] = mapped_column(Enum(PostingSource, name="posting_source"))
+    posting_link: Mapped[str] = mapped_column(String)
+
+    benefits: Mapped[Benefits] = relationship(
+        back_populates="job",
+        uselist=False,
+        cascade="all, delete-orphan"
+    )

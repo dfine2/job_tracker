@@ -1,5 +1,5 @@
 from job_tracker.database.table import Table
-from job_tracker.models.enums import Source, Status, WorkModel
+from job_tracker.domain.enums import PostingSource, Status, WorkModel
 
 
 class JobTable(Table):
@@ -7,7 +7,7 @@ class JobTable(Table):
     @classmethod
     def _create(cls):
         curs = cls.conn.cursor()
-        source_values = ",".join(f"'{name.value}'" for name in Source)
+        source_values = ",".join(f"'{name.value}'" for name in PostingSource)
         work_model_values = ",".join(f"'{name.value}'" for name in WorkModel)
         status_values = ",".join(f"'{name.value}'" for name in Status)
 
