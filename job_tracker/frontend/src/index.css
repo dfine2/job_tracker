@@ -5,6 +5,13 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #ab7922;
+  background-image: url("https://www.transparenttextures.com/patterns/wine-cork.png");
+
 }
 
 code {

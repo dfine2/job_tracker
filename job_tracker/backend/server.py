@@ -1,31 +1,31 @@
-# Filename - server.py
+import datetime
+from dataclasses import asdict
+import json
+import os
 
-# Import flask and datetime module for showing date and time
 from flask import Flask
 from flask_cors import CORS
-import datetime
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
+from job_tracker.backend.domain.job import Job
 
 x = datetime.datetime.now()
 
 
-# Initializing flask app
+DB_PATH = os.getenv("DB_PATH", "")
+engine = create_engine(f"sqlite:///{DB_PATH}", echo=True)
+session = sessionmaker(engine)()
+
+jobs = session.query(Job)
 app = Flask(__name__)
 CORS(app, origins=["http://localhost:3000"])
 
 
-# Route for seeing a data
-@app.route('/data')
-def get_time():
+@app.route("/jobs")
+def get_jobs():
+    return [json.dumps(job.to_dict()) for job in jobs]
 
-    # Returning an api for showing in  reactjs
-    return {
-        'Name':"geek", 
-        "Age":"22",
-        "Date":x, 
-        "programming":"python"
-        }
 
-    
-# Running app
 if __name__ == '__main__':
     app.run(port=5001,debug=True)

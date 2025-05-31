@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 import enum
 from typing import Optional
-from sqlalchemy import Enum, Float, ForeignKey, String
+from sqlalchemy import CheckConstraint, Enum, Float, ForeignKey, String
 from sqlalchemy.orm import composite, Mapped, mapped_column, relationship
 
 
@@ -13,11 +13,12 @@ class WorkModel(enum.Enum):
     ON_SITE = "On-Site"
     REMOTE = "Remote"
     HYBRID = "Hybrid"
-
+work_model_contraint = ", ".join(f"'{member.value}'" for member in WorkModel)
 
 class PostingSource(enum.Enum):
     LINKEDIN = "LinkedIn"
     OTHER="Other"
+posting_source_contraint = ", ".join(f"'{member.value}'" for member in PostingSource)
 
 @dataclass
 class Compensation():
@@ -36,8 +37,12 @@ class ApplicationStatus(enum.Enum):
     INTERVIEWING = "Interviewing"
     OFFERED = "Offered"
     REJECTED = "Rejected"
+application_status_contraint = ", ".join(
+    f"'{member.value}'" for member in ApplicationStatus
+)
 
 
+@dataclass
 class Application:
 
     status: ApplicationStatus = ApplicationStatus.NOT_APPLIED
@@ -48,10 +53,15 @@ class Application:
 
 class Job(Base):
     __tablename__ = "job"
+    __table_args__ = (
+        CheckConstraint(f"work_model IN ({work_model_contraint})"),
+        CheckConstraint(f"application_status IN ({application_status_contraint})"),
+        CheckConstraint(f"posting_source IN ({posting_source_contraint})"),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     title: Mapped[str] = mapped_column(String)
-    work_model: Mapped[WorkModel] = mapped_column(Enum(WorkModel, name="work_model"))
+    work_model: Mapped[String] = mapped_column(String)
 
     compensation_low: Mapped[float] = mapped_column(Float)
     compensation_high: Mapped[float] = mapped_column(Float)
@@ -62,9 +72,9 @@ class Job(Base):
     company_name: Mapped[str] = mapped_column(ForeignKey("company.name"))
     company: Mapped[Company] = relationship(back_populates="jobs")
 
-    application_status: Mapped[ApplicationStatus] = mapped_column(
-        Enum(ApplicationStatus, name="application_status"),
-        default=ApplicationStatus.NOT_APPLIED,
+    application_status: Mapped[str] = mapped_column(
+        String,
+        default=ApplicationStatus.NOT_APPLIED.value,
     )
     application_resume_path: Mapped[Optional[str]] = mapped_column(String, default=None)
     application_cover_letter_path: Mapped[Optional[str]] = mapped_column(
@@ -78,7 +88,7 @@ class Job(Base):
         application_cover_letter_path,
     )
 
-    posting_source: Mapped[PostingSource] = mapped_column(Enum(PostingSource, name="posting_source"))
+    posting_source: Mapped[String] = mapped_column(String)
     posting_link: Mapped[str] = mapped_column(String)
     posting: Mapped[Posting] = composite(Posting, posting_source, posting_link)
 

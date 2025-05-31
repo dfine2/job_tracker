@@ -178,3 +178,4 @@ job_tracker.db
 backup_data/
 data/
 .DS_STORE
+*/node_modules/*
