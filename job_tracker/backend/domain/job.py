@@ -53,6 +53,7 @@ class Application:
 
 class Job(BaseModel, db.Model):
     __tablename__ = "job"
+    __allow_unmapped__ = True
     __table_args__ = (
         CheckConstraint(f"work_model IN ({work_model_contraint})"),
         CheckConstraint(f"application_status IN ({application_status_contraint})"),
@@ -94,10 +95,40 @@ class Job(BaseModel, db.Model):
 
     location: Mapped[Optional[str]] = mapped_column(String, nullable=True)
 
+    @classmethod
+    def from_frontend_dict(cls, data):
+        if "compensation" in data:
+            try:
+                parts = data["compensation"].split("-")
+                data["compensation_low"] = float(
+                    parts[0].strip().replace("$", "").replace(",", "")
+                )
+                data["compensation_high"] = float(
+                    parts[1].strip().replace("$", "").replace(",", "")
+                )
+            except Exception:
+                data["compensation_low"] = 0
+                data["compensation_high"] = 0
+
+            del data["compensation"]
+
+        if "source" in data:
+            data["posting_source"] = data["source"]
+            del data["source"]
+
+        return cls(**data)
+
 
 def get_all_jobs():
     jobs = Job.query.all()
     return jsonify([job.to_dict() for job in jobs])
+
+
+def create_job_record(data):
+    job = Job.from_frontend_dict(data)
+    db.session.add(job)
+    db.session.commit()
+    return jsonify(job.to_dict()), 201
 
 
 def update_job_record(job_id, data):

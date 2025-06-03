@@ -13,39 +13,6 @@ import {
 } from "@mui/x-data-grid";
 import { Add, Edit, Delete, Save, Cancel } from "@mui/icons-material";
 
-function EditToolbar(props) {
-  const { setRows, setRowModesModel } = props;
-
-  const handleClick = () => {
-    setRows((oldRows) => {
-      const newId =
-        oldRows.length > 0 ? Math.max(...oldRows.map((r) => r.id)) + 1 : 1;
-
-      const newRows = [
-        ...oldRows,
-        { id: newId, name: "", age: "", role: "", isNew: true },
-      ];
-
-      setRowModesModel((oldModel) => ({
-        ...oldModel,
-        [newId]: { mode: GridRowModes.Edit, fieldToFocus: "name" },
-      }));
-
-      return newRows;
-    });
-  };
-
-  return (
-    <Toolbar>
-      <Tooltip title="Add record">
-        <ToolbarButton onClick={handleClick}>
-          <Add fontSize="small" />
-        </ToolbarButton>
-      </Tooltip>
-    </Toolbar>
-  );
-}
-
 function format_compensation_range({ job }) {
   const compensation_low = parseFloat(job.compensation_low);
   const compensation_high = parseFloat(job.compensation_high);
@@ -67,6 +34,64 @@ function format_compensation_range({ job }) {
     return "";
   }
 }
+
+function EditToolbar(props) {
+  const { setRows, setRowModesModel } = props;
+
+  const handleAddClick = async () => {
+    const newId = Math.random().toString(36).substr(2, 9); // temp unique ID
+
+    const newJob = {
+      company_name: "",
+      title: "",
+      compensation: "",
+      work_model: "",
+      location: "",
+      source: "",
+      application_status: "",
+    };
+
+    // try {
+    //   const response = await fetch("/api/jobs", {
+    //     method: "POST",
+    //     headers: { "Content-Type": "application/json" },
+    //     body: JSON.stringify(newJob),
+    //   });
+
+    //   const createdJob = await response.json();
+    //   const newId = createdJob.id;
+
+    setRows((oldRows) => [
+      ...oldRows,
+      {
+        id: newId,
+        company: newJob.company_name,
+        title: newJob.title,
+        compensation: format_compensation_range({ job: newJob }),
+        workModel: newJob.work_model,
+        location: newJob.location,
+        source: newJob.source,
+        applicationStatus: newJob.application_status,
+        isNew: true,
+      },
+    ]);
+    setRowModesModel((oldModel) => ({
+      ...oldModel,
+      [newId]: { mode: GridRowModes.Edit, fieldToFocus: "company" },
+    }));
+  };
+
+  return (
+    <Toolbar>
+      <Tooltip title="Add record">
+        <ToolbarButton onClick={handleAddClick}>
+          <Add fontSize="small" />
+        </ToolbarButton>
+      </Tooltip>
+    </Toolbar>
+  );
+}
+
 
 function JobsTable({ jobs }) {
   const [rows, setRows] = React.useState([]);
