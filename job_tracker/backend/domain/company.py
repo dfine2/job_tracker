@@ -2,11 +2,13 @@ from typing import TYPE_CHECKING
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from job_tracker.backend.domain.base_classes import Base
+from job_tracker.backend.domain.base_classes import BaseModel
+
 if TYPE_CHECKING:
     from job_tracker.backend.domain.job import Job
 
-class Company(Base):
+
+class Company(BaseModel):
     __tablename__ = "company"
 
     name: Mapped[str] = mapped_column(primary_key=True)

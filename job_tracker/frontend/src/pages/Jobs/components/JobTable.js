@@ -27,20 +27,38 @@ function format_compensation_range({ job }) {
     return "";
   }
 }
+
+const handleRowUpdate = async (updatedRow) => {
+  console.log(updatedRow);
+  try {
+    let response = await fetch(`/api/jobs/${updatedRow.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(updatedRow),
+    });
+    const res = await response.json();
+    return res;
+  } catch (error) {
+    console.error("Failed to update job:", error);
+    throw error;
+  }
+};
+
 function JobsTable({ jobs }) {
+  console.log(jobs);
   const columns = [
     { field: "id", headerName: "ID", width: 48, maxWidth: 90 },
     {
       field: "company",
       headerName: "Company",
-      width: 90,
-      maxWidth: 150,
+      width: 150,
+      maxWidth: 300,
       editable: true,
     },
     {
       field: "title",
       headerName: "Title",
-      width: 150,
+      width: 300,
       maxWidth: 500,
       editable: true,
     },
@@ -87,11 +105,10 @@ function JobsTable({ jobs }) {
       width: 160,
     },
   ];
-  const rows = jobs.map((_job, index) => {
-    const job = JSON.parse(_job);
+  const rows = jobs.map((job) => {
     console.log(job);
     return {
-      id: index,
+      id: job.id,
       company: job.company_name,
       title: job.title,
       compensation: format_compensation_range({ job }),
@@ -113,6 +130,11 @@ function JobsTable({ jobs }) {
               pageSize: 5,
             },
           },
+        }}
+        processRowUpdate={handleRowUpdate}
+        experimentalFeatures={{ newEditingApi: true }}
+        onProcessRowUpdateError={(error) => {
+          console.error("Update failed:", error);
         }}
         pageSizeOptions={[5]}
         checkboxSelection

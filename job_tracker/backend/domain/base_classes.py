@@ -3,8 +3,11 @@ from typing import Any, Generic, Optional, Type, TypeVar
 from sqlalchemy import Enum, Float, ForeignKey, String, TEXT, TypeDecorator
 from sqlalchemy.orm import composite, DeclarativeBase, Mapped, mapped_column, relationship
 
+from job_tracker.backend.extensions import db
 
-class Base(DeclarativeBase):
+
+class BaseModel(db.Model):
+    __abstract__ = True
 
     def to_dict(self):
         return {

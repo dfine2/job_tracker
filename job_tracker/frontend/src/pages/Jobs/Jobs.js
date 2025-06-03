@@ -24,8 +24,9 @@ const StyledGrid = styled(Grid)(({ theme }) => ({
 function Jobs() {
   const [jobs, setJobs] = useState([]);
   useEffect(() => {
-    fetch("/jobs")
+    fetch("/api/jobs")
       .then((res) => {
+        console.log(res);
         return res.json();
       })
       .then((jobs) => {

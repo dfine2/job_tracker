@@ -1,13 +1,13 @@
 from dataclasses import dataclass
 import enum
 from typing import Optional
-from sqlalchemy import CheckConstraint, Enum, Float, ForeignKey, String
+
+from flask import jsonify
+from sqlalchemy import CheckConstraint, Float, ForeignKey, String
 from sqlalchemy.orm import composite, Mapped, mapped_column, relationship
-
-
-from job_tracker.backend.domain.base_classes import Base
-# from job_tracker.backend.domain.benefits import Benefits
+from job_tracker.backend.domain.base_classes import BaseModel
 from job_tracker.backend.domain.company import Company
+from job_tracker.backend.extensions import db
 
 class WorkModel(enum.Enum):
     ON_SITE = "On-Site"
@@ -51,7 +51,7 @@ class Application:
     cover_letter_path: Optional[str] = None
 
 
-class Job(Base):
+class Job(BaseModel, db.Model):
     __tablename__ = "job"
     __table_args__ = (
         CheckConstraint(f"work_model IN ({work_model_contraint})"),
@@ -93,3 +93,32 @@ class Job(Base):
     posting: Mapped[Posting] = composite(Posting, posting_source, posting_link)
 
     location: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+
+
+def get_all_jobs():
+    jobs = Job.query.all()
+    return jsonify([job.to_dict() for job in jobs])
+
+
+def update_job_record(job_id, data):
+    job = Job.query.get_or_404(job_id)
+    updatable_fields = {
+        "title",
+        "work_model",
+        "compensation_low",
+        "compensation_high",
+        "company_name",
+        "application_status",
+        "application_resume_path",
+        "application_cover_letter_path",
+        "application_date",
+        "posting_source",
+        "posting_link",
+        "location",
+    }
+
+    for field, value in data.items():
+        if field in updatable_fields:
+            setattr(job, field, value)
+    db.session.commit()
+    return jsonify(job.to_dict())
